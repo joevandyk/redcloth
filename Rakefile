@@ -3,11 +3,13 @@ require 'rubygems'
 gem 'echoe', '>= 3.0.1'
 require 'echoe'
 
+Gem::Specification::PLATFORM_CROSS_TARGETS << "pureruby"
+
 e = Echoe.new('RedCloth', RedCloth::VERSION.to_s) do |p|
   p.summary = RedCloth::DESCRIPTION
   p.author = "Jason Garber"
   p.email = 'redcloth-upwards@rubyforge.org'
-  p.clean_pattern += ['ext/redcloth_scan/**/*.{bundle,so,obj,pdb,lib,def,exp,c,o,xml,class,jar,java}', 'lib/*.{bundle,so,o,obj,pdb,lib,def,exp,jar}', 'ext/redcloth_scan/Makefile']
+  p.clean_pattern += ['ext/redcloth_scan/**/*.{bundle,so,obj,pdb,lib,def,exp,c,o,xml,class,jar,java}', 'lib/*.{bundle,so,o,obj,pdb,lib,def,exp,jar}', 'ext/redcloth_scan/**/redcloth_*.rb', 'lib/redcloth_scan.rb', 'ext/redcloth_scan/Makefile']
   p.url = "http://redcloth.org"
   p.project = "redcloth"
   p.rdoc_pattern = ['README', 'COPING', 'CHANGELOG', 'lib/**/*.rb', 'doc/**/*.rdoc']
@@ -20,10 +22,14 @@ e = Echoe.new('RedCloth', RedCloth::VERSION.to_s) do |p|
     p.platform = 'x86-mswin32-60'
   elsif Platform.java?
     p.platform = 'universal-java'
+  elsif RUBY_PLATFORM == 'pureruby'
+    p.platform = 'ruby'
   end
   
   if RUBY_PLATFORM =~ /mingw|mswin|java/
     p.need_tar_gz = false
+  elsif RUBY_PLATFORM == 'pureruby'
+    p.need_gem = false
   else
     p.need_zip = true
     p.need_tar_gz = true
@@ -36,6 +42,8 @@ e = Echoe.new('RedCloth', RedCloth::VERSION.to_s) do |p|
       self.files += ['lib/redcloth_scan.so']
     when /java/
       self.files += ['lib/redcloth_scan.jar']
+    when 'pureruby'
+      self.files += ['lib/redcloth_scan.rb']
     else
       self.files += %w[attributes inline scan].map {|f| "ext/redcloth_scan/redcloth_#{f}.c"}
     end
@@ -89,6 +97,14 @@ when /java/
     move_extensions
   end
   
+when /pureruby/
+
+  filename = "lib/redcloth_scan.rb"
+  file filename => FileList["#{ext}/redcloth_scan.rb", "#{ext}/redcloth_inline.rb", "#{ext}/redcloth_attributes.rb"] do
+    sources = FileList["#{ext}/**/redcloth_*.rb"].join(' ')
+    sh "cat #{sources} > #{filename}"
+  end
+  
 else
   filename = "#{ext}/redcloth_scan.#{Config::CONFIG['DLEXT']}"
   file filename => FileList["#{ext}/redcloth_scan.c", "#{ext}/redcloth_inline.c", "#{ext}/redcloth_attributes.c"]
@@ -97,7 +113,14 @@ end
 task :compile => [filename]
 
 def ragel(target_file, source_file)
-  host_language = (target_file =~ /java$/) ? "J" : "C"
+  case target_file
+  when /java$/
+    "J"
+  when /rb$/
+    "R"
+  else
+    "C"
+  end
   code_style = (host_language == "C") ? " -" + (@code_style || "T0") : ""
   ensure_ragel_version(target_file) do
     sh %{ragel #{source_file} -#{host_language}#{code_style} -o #{target_file}}
@@ -127,6 +150,17 @@ file "#{ext}/RedclothInline.java" =>  ["#{ext}/redcloth_inline.java.rl",   "#{ex
 end
 file "#{ext}/RedclothAttributes.java" =>  ["#{ext}/redcloth_attributes.java.rl",   "#{ext}/redcloth_attributes.rl", "#{ext}/redcloth_common.java.rl",   "#{ext}/redcloth_common.rl", "#{ext}/redcloth_scan.java.rl"] do
   ragel "#{ext}/RedclothAttributes.java", "#{ext}/redcloth_attributes.java.rl"
+end
+
+# Ragel-generated pureruby files
+file "#{ext}/redcloth_scan.rb" =>  ["#{ext}/redcloth_scan.rb.rl",   "#{ext}/redcloth_scan.rl", "#{ext}/redcloth_common.rb.rl",   "#{ext}/redcloth_common.rl"] do
+  ragel "#{ext}/redcloth_scan.rb", "#{ext}/redcloth_scan.rb.rl"
+end
+file "#{ext}/redcloth_inline.rb" =>  ["#{ext}/redcloth_inline.rb.rl",   "#{ext}/redcloth_inline.rl", "#{ext}/redcloth_common.rb.rl",   "#{ext}/redcloth_common.rl"] do
+  ragel "#{ext}/redcloth_inline.rb", "#{ext}/redcloth_inline.rb.rl"
+end
+file "#{ext}/redcloth_attributes.rb" =>  ["#{ext}/redcloth_attributes.rb.rl",   "#{ext}/redcloth_attributes.rl", "#{ext}/redcloth_common.rb.rl",   "#{ext}/redcloth_common.rl"] do
+  ragel "#{ext}/redcloth_attributes.rb", "#{ext}/redcloth_attributes.rb.rl"
 end
 
 
