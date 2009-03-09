@@ -204,65 +204,74 @@ module RedCloth
       @regs[a] = @regs[b] unless @regs[b].nil?
     end
     def TRANSFORM(t)
-      if (p > reg && reg >= ts) { \
-        VALUE str = redcloth_transform(self, reg, p, refs); \
-        rb_hash_aset(regs, ID2SYM(rb_intern(T)), str); \
-        /*printf("TRANSFORM(" T ") '%s' (p:'%s' reg:'%s')\n", RSTRING_PTR(str), p, reg);*/  \
-      } else { \
-        rb_hash_aset(regs, ID2SYM(rb_intern(T)), Qnil); \
-      }
+      if (p > reg && reg >= ts)
+        str = redcloth_transform(reg, p, refs)
+        regs[t] = str
+        # /*printf("TRANSFORM(" T ") '%s' (p:'%s' reg:'%s')\n", RSTRING_PTR(str), p, reg);*/  \
+      else
+        regs[t] = nil
+      end
     end
-    #define STORE(T)  \
-      if (p > reg && reg >= ts) { \
-        VALUE str = STR_NEW(reg, p-reg); \
-        rb_hash_aset(regs, ID2SYM(rb_intern(T)), str); \
-        /*printf("STORE(" T ") '%s' (p:'%s' reg:'%s')\n", RSTRING_PTR(str), p, reg);*/  \
-      } else { \
-        rb_hash_aset(regs, ID2SYM(rb_intern(T)), Qnil); \
-      }
-    #define STORE_B(T)  \
-      if (p > bck && bck >= ts) { \
-        VALUE str = STR_NEW(bck, p-bck); \
-        rb_hash_aset(regs, ID2SYM(rb_intern(T)), str); \
-        /*printf("STORE_B(" T ") '%s' (p:'%s' reg:'%s')\n", RSTRING_PTR(str), p, reg);*/  \
-      } else { \
-        rb_hash_aset(regs, ID2SYM(rb_intern(T)), Qnil); \
-      }
-    #define STORE_URL(T) \
-      if (p > reg && reg >= ts) { \
-        char punct = 1; \
-        while (p > reg && punct == 1) { \
-          switch (*(p - 1)) { \
-            case ')': \
-              { /*needed to keep inside chars scoped for less memory usage*/\
-                char *temp_p = p - 1; \
-                char level = -1; \
-                while (temp_p > reg) { \
-                  switch(*(temp_p - 1)) { \
-                    case '(': ++level; break; \
-                    case ')': --level; break; \
-                  } \
-                  --temp_p; \
-                } \
-                if (level == 0) { punct = 0; } else { --p; } \
-              } \
-              break;  \
-            case '!': case '"': case '#': case '$': case '%': case ']': case '[': case '&': case '\'': \
-            case '*': case '+': case ',': case '-': case '.': case '(':  case ':':  \
-            case ';': case '=': case '?': case '@': case '\\': case '^': case '_': \
-            case '`': case '|': case '~': p--; break; \
-            default: punct = 0; \
-          } \
-        } \
-        te = p; \
-      } \
-      STORE(T); \
-      if ( !NIL_P(refs) && rb_funcall(refs, rb_intern("has_key?"), 1, rb_hash_aref(regs, ID2SYM(rb_intern(T)))) ) { \
-        rb_hash_aset(regs, ID2SYM(rb_intern(T)), rb_hash_aref(refs, rb_hash_aref(regs, ID2SYM(rb_intern(T))))); \
-      }
-    #define STORE_LINK_ALIAS() \
-      rb_hash_aset(refs_found, rb_hash_aref(regs, ID2SYM(rb_intern("text"))), rb_hash_aref(regs, ID2SYM(rb_intern("href"))))
-    #define CLEAR_LIST() list_layout = rb_ary_new()
+    def STORE(t)
+      if (p > reg && reg >= ts)
+        str = data[reg, p-reg]
+        regs[t] = str
+        # /*printf("STORE(" T ") '%s' (p:'%s' reg:'%s')\n", RSTRING_PTR(str), p, reg);*/  \
+      else
+        regs[t] = nil
+      end
+    end
+    def STORE_B(t)
+      if (p > bck && bck >= ts)
+        str = data[bck, p-bck)]
+        regs[t] = str
+        # /*printf("STORE_B(" T ") '%s' (p:'%s' reg:'%s')\n", RSTRING_PTR(str), p, reg);*/  \
+      else
+        regs[t] = nil
+      end
+    end
+    def STORE_URL(t)
+      if (p > reg && reg >= ts)
+        punct = true
+        while (p > reg && punct)
+          case data[p - 1, 1]
+            when ')'
+              temp_p = p - 1
+              level = -1
+              while (temp_p > reg)
+                case data[temp_p - 1, 1]
+                  when '('; level += 1
+                  when ')'; level -= 1
+                end
+                temp_p -= 1
+              end
+              if (level == 0) 
+                punct = 0
+              else
+                p -= 1
+              end
+            when '!', '"', '#', '$', '%', ']', '[', '&', '\'',
+              '*', '+', ',', '-', '.', '(', ':', ';', '=', 
+              '?', '@', '\\', '^', '_', '`', '|', '~'
+                p -= 1
+            else
+              punct = 0
+            end
+          end
+        end
+        te = p
+      end
+      STORE(t)
+      if ( !refs.nil? && refs.has_key?(regs[t]) )
+        regs[t] = refs[regs[t]]
+      end
+    end
+    def STORE_LINK_ALIAS()
+      refs_found[regs[:text]] = regs[:href]
+    end
+    def CLEAR_LIST()
+      list_layout = []
+    end
     #define LIST_ITEM() \
         int aint = 0; \
         VALUE aval = rb_ary_entry(list_index, nest-1); \
