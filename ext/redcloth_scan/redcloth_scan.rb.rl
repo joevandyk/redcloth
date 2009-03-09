@@ -22,6 +22,10 @@
 
 module RedCloth
   class TextileDoc < String
+    attr_accessor :p, :pe, :eof, :refs, :orig_data, :nest, :html,
+      :table, :block, :reg, :regs, :list_layout, :list_index, :list_continue,
+      :listm, :refs_found
+    
     def to(formatter)
       self.delete!("\r")
       working_copy = self.clone
@@ -47,7 +51,7 @@ module RedCloth
 
       list_layout = nil
       list_index = [];
-      int list_continue = 0;
+      list_continue = 0;
       SET_PLAIN_BLOCK("p")
       extend = nil
       listm = []
@@ -156,27 +160,50 @@ module RedCloth
     def PARSE_IMAGE_ATTR(a)
       red_parse_image_attr(regs, a)
     end
-    #define PASS_CODE(H, A, T, O) rb_str_append(H, red_pass_code(self, regs, ID2SYM(rb_intern(A)), rb_intern(T)))
-    #define ADD_BLOCK() \
-      rb_str_append(html, red_block(self, regs, block, refs)); \
-      extend = Qnil; \
-      CLEAR(block); \
+    def PASS_CODE(h, a, t, o)
+      h << red_pass_code(@regs, a, t))
+    def ADD_BLOCK()
+      @html << red_block(@regs, @block, @refs)
+      @extend = nil
+      CLEAR(block)
       CLEAR_REGS()
-    #define ADD_EXTENDED_BLOCK()    rb_str_append(html, red_block(self, regs, block, refs)); CLEAR(block);
-    #define END_EXTENDED()     extend = Qnil; CLEAR_REGS();
-    #define IS_NOT_EXTENDED()     NIL_P(extend)
-    #define ADD_BLOCKCODE()    rb_str_append(html, red_blockcode(self, regs, block)); CLEAR(block); CLEAR_REGS()
-    #define ADD_EXTENDED_BLOCKCODE()    rb_str_append(html, red_blockcode(self, regs, block)); CLEAR(block);
-    #define ASET(T, V)     rb_hash_aset(regs, ID2SYM(rb_intern(T)), STR_NEW2(V));
-    #define AINC(T)        red_inc(regs, ID2SYM(rb_intern(T)));
-    #define SET_ATTRIBUTES() \
-      SET_ATTRIBUTE("class_buf", "class"); \
-      SET_ATTRIBUTE("id_buf", "id"); \
-      SET_ATTRIBUTE("lang_buf", "lang"); \
-      SET_ATTRIBUTE("style_buf", "style");
-    #define SET_ATTRIBUTE(B, A) \
-      if (rb_hash_aref(regs, ID2SYM(rb_intern(B))) != Qnil) rb_hash_aset(regs, ID2SYM(rb_intern(A)), rb_hash_aref(regs, ID2SYM(rb_intern(B))));
-    #define TRANSFORM(T) \
+    end
+    def ADD_EXTENDED_BLOCK()
+      @html << red_block(@regs, @block, @refs))
+      CLEAR(@block)
+    end
+    def END_EXTENDED()
+      @extend = nil
+      CLEAR_REGS()
+    end
+    def IS_NOT_EXTENDED()
+      @extend.nil?
+    end
+    def ADD_BLOCKCODE()
+      @html << red_blockcode(@regs, @block)
+      CLEAR(@block)
+      CLEAR_REGS()
+    end
+    def ADD_EXTENDED_BLOCKCODE()
+      @html << red_blockcode(@regs, @block)
+      CLEAR(block)
+    end
+    def ASET(t, v)
+      @regs[t] = v
+    end
+    def AINC(t)
+      red_inc(@regs, t)
+    end
+    def SET_ATTRIBUTES()
+      SET_ATTRIBUTE("class_buf", "class")
+      SET_ATTRIBUTE("id_buf", "id")
+      SET_ATTRIBUTE("lang_buf", "lang")
+      SET_ATTRIBUTE("style_buf", "style")
+    end
+    def SET_ATTRIBUTE(b, a)
+      @regs[a] = @regs[b] unless @regs[b].nil?
+    end
+    def TRANSFORM(t)
       if (p > reg && reg >= ts) { \
         VALUE str = redcloth_transform(self, reg, p, refs); \
         rb_hash_aset(regs, ID2SYM(rb_intern(T)), str); \
@@ -184,6 +211,7 @@ module RedCloth
       } else { \
         rb_hash_aset(regs, ID2SYM(rb_intern(T)), Qnil); \
       }
+    end
     #define STORE(T)  \
       if (p > reg && reg >= ts) { \
         VALUE str = STR_NEW(reg, p-reg); \
