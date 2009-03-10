@@ -25,8 +25,8 @@
   block_end = ( double_return | EOF );
   ftype = ( "fn" >A %{ STORE("type"); } digit+ >A %{ STORE("id"); } ) ;
   footnote_start = ( ftype A C :> dotspace ) ;
-  ul = "*" %{nest++; list_type = "ul";};
-  ol = "#" %{nest++; list_type = "ol";};
+  ul = "*" %{INC(nest); list_type = "ul";};
+  ol = "#" %{INC(nest); list_type = "ol";};
   ul_start  = ( ul | ol )* ul A C :> " "+   ;
   ol_start  = ( ul | ol )* ol N A C :> " "+ ;
   list_start  = " "* ( ul_start | ol_start ) >{nest = 0;} ;
@@ -73,28 +73,11 @@
   *|;
   
   pre_block := |*
-    EOF { 
-      ADD_BLOCKCODE(); 
-      fgoto main; 
-    };
-    double_return { 
-      if (IS_NOT_EXTENDED()) { 
-        ADD_BLOCKCODE(); 
-        fgoto main; 
-      } else { 
-        ADD_EXTENDED_BLOCKCODE(); 
-      } 
-    };
-    double_return next_block_start { 
-      if (IS_NOT_EXTENDED()) { 
-        ADD_BLOCKCODE(); 
-        fgoto main; 
-      } else { 
-        ADD_EXTENDED_BLOCKCODE(); 
-        END_EXTENDED(); 
-        fgoto main; 
-      } 
-    };
+    EOF { ADD_BLOCKCODE(); fgoto main; };
+    double_return when extended { ADD_EXTENDED_BLOCKCODE(); };
+    double_return when not_extended { ADD_BLOCKCODE(); fgoto main; } ;
+    double_return next_block_start when extended { ADD_EXTENDED_BLOCKCODE(); END_EXTENDED(); fgoto main; };
+    double_return next_block_start when not_extended { ADD_BLOCKCODE(); fgoto main; };
     default => esc_pre;
   *|;
 
@@ -110,33 +93,11 @@
   *|;
   
   notextile_block := |*
-    EOF {
-      ADD_BLOCK();
-      fgoto main;
-    };
-    double_return {
-      if (IS_NOT_EXTENDED()) {
-        ADD_BLOCK();
-        CAT(html);
-        fgoto main;
-      } else {
-        CAT(block);
-        ADD_EXTENDED_BLOCK();
-        CAT(html);
-      }
-    };
-    double_return next_block_start {
-      if (IS_NOT_EXTENDED()) {
-        ADD_BLOCK();
-        CAT(html);
-        fgoto main;
-      } else {
-        CAT(block);
-        ADD_EXTENDED_BLOCK();
-        END_EXTENDED();
-        fgoto main; 
-      } 
-    };
+    EOF { ADD_BLOCK(); fgoto main; };
+    double_return when extended { CAT(block); ADD_EXTENDED_BLOCK(); CAT(html); };
+    double_return when not_extended { ADD_BLOCK(); CAT(html); fgoto main; } ;
+    double_return next_block_start when extended { CAT(block); ADD_EXTENDED_BLOCK(); END_EXTENDED(); fgoto main; };
+    double_return next_block_start when not_extended { ADD_BLOCK(); CAT(html); fgoto main; };
     default => cat;
   *|;
  
@@ -146,123 +107,34 @@
   *|;
 
   bc := |*
-    EOF { 
-      ADD_BLOCKCODE(); 
-      INLINE(html, "bc_close"); 
-      SET_PLAIN_BLOCK("p");
-      fgoto main;
-    };
-    double_return { 
-      if (IS_NOT_EXTENDED()) { 
-        ADD_BLOCKCODE(); 
-        INLINE(html, "bc_close"); 
-        SET_PLAIN_BLOCK("p");
-        fgoto main; 
-      } else { 
-        ADD_EXTENDED_BLOCKCODE(); 
-        CAT(html); 
-      } 
-    };
-    double_return next_block_start { 
-      if (IS_NOT_EXTENDED()) { 
-        ADD_BLOCKCODE(); 
-        INLINE(html, "bc_close"); 
-        SET_PLAIN_BLOCK("p");
-        fgoto main; 
-      } else { 
-        ADD_EXTENDED_BLOCKCODE(); 
-        CAT(html); 
-        RSTRIP_BANG(html);
-        INLINE(html, "bc_close"); 
-        SET_PLAIN_BLOCK("p");
-        END_EXTENDED(); 
-        fgoto main; 
-      } 
-    };
+    EOF {  ADD_BLOCKCODE();  INLINE(html, "bc_close");  SET_PLAIN_BLOCK("p"); fgoto main; };
+    double_return when extended { ADD_EXTENDED_BLOCKCODE(); CAT(html); };
+    double_return when not_extended { ADD_BLOCKCODE(); INLINE(html, "bc_close"); SET_PLAIN_BLOCK("p"); fgoto main; };
+    double_return next_block_start when extended { ADD_EXTENDED_BLOCKCODE(); CAT(html); RSTRIP_BANG(html); INLINE(html, "bc_close"); SET_PLAIN_BLOCK("p"); END_EXTENDED(); fgoto main; };
+    double_return next_block_start when not_extended { ADD_BLOCKCODE(); INLINE(html, "bc_close"); SET_PLAIN_BLOCK("p"); fgoto main; };
     default => esc_pre;
   *|;
 
   bq := |*
-    EOF { 
-      ADD_BLOCK(); 
-      INLINE(html, "bq_close"); 
-      fgoto main; 
-    };
-    double_return { 
-      if (IS_NOT_EXTENDED()) { 
-        ADD_BLOCK(); 
-        INLINE(html, "bq_close"); 
-        fgoto main; 
-      } else { 
-        ADD_EXTENDED_BLOCK(); 
-      } 
-    };
-    double_return next_block_start { 
-      if (IS_NOT_EXTENDED()) { 
-        ADD_BLOCK(); 
-        INLINE(html, "bq_close"); 
-        fgoto main; 
-      } else {
-        ADD_EXTENDED_BLOCK(); 
-        INLINE(html, "bq_close"); 
-        END_EXTENDED(); 
-        fgoto main; 
-      }
-    };
-    html_end_terminating_block { 
-        if (IS_NOT_EXTENDED()) { 
-          ADD_BLOCK(); 
-          INLINE(html, "bq_close"); 
-          fgoto main; 
-        } else {
-          ADD_EXTENDED_BLOCK(); 
-          INLINE(html, "bq_close"); 
-          END_EXTENDED(); 
-          fgoto main; 
-        }
-      };
+    EOF { ADD_BLOCK(); INLINE(html, "bq_close"); fgoto main; };
+    double_return when extended { ADD_EXTENDED_BLOCK(); };
+    double_return when not_extended { ADD_BLOCK(); INLINE(html, "bq_close"); fgoto main; };
+    double_return next_block_start when extended { ADD_EXTENDED_BLOCK(); INLINE(html, "bq_close"); END_EXTENDED(); fgoto main; };
+    double_return next_block_start when not_extended { ADD_BLOCK(); INLINE(html, "bq_close"); fgoto main; };
+    html_end_terminating_block when extended { ADD_EXTENDED_BLOCK(); INLINE(html, "bq_close"); END_EXTENDED(); fgoto main; };
+    html_end_terminating_block when not_extended { ADD_BLOCK(); INLINE(html, "bq_close"); fgoto main; };
     default => cat;
   *|;
 
   block := |*
-    EOF { 
-      ADD_BLOCK(); 
-      fgoto main;
-    };
-    double_return {
-      if (IS_NOT_EXTENDED()) { 
-        ADD_BLOCK(); 
-        fgoto main; 
-      } else { 
-        ADD_EXTENDED_BLOCK(); 
-      } 
-    };
-    double_return next_block_start { 
-      if (IS_NOT_EXTENDED()) { 
-        ADD_BLOCK(); 
-        fgoto main; 
-      } else { 
-        ADD_EXTENDED_BLOCK(); 
-        END_EXTENDED(); 
-        fgoto main; 
-      }      
-    };
-    html_end_terminating_block { 
-      if (IS_NOT_EXTENDED()) { 
-        ADD_BLOCK(); 
-        fgoto main; 
-      } else { 
-        ADD_EXTENDED_BLOCK(); 
-        END_EXTENDED(); 
-        fgoto main; 
-      }      
-    };
-    LF list_start { 
-      ADD_BLOCK(); 
-      CLEAR_LIST(); 
-      LIST_ITEM(); 
-      fgoto list; 
-    };
+    EOF { ADD_BLOCK(); fgoto main; };
+    double_return when extended { ADD_EXTENDED_BLOCK(); };
+    double_return when not_extended { ADD_BLOCK(); fgoto main; };
+    double_return next_block_start when extended { ADD_EXTENDED_BLOCK(); END_EXTENDED(); fgoto main; };
+    double_return next_block_start when not_extended { ADD_BLOCK(); fgoto main; };
+    html_end_terminating_block when extended { ADD_EXTENDED_BLOCK(); END_EXTENDED(); fgoto main; };
+    html_end_terminating_block when not_extended { ADD_BLOCK(); fgoto main; };
+    LF list_start { ADD_BLOCK(); CLEAR_LIST(); LIST_ITEM(); fgoto list; };
     
     default => cat;
   *|;

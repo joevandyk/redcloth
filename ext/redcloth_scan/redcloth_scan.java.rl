@@ -272,13 +272,13 @@ public class RedclothScanService implements BasicLibraryService {
       red_inc(regs, runtime.newSymbol(T));
     }
 
+    public void INC(int N) {
+      N++;
+    }
+
     public void END_EXTENDED() {
       extend = runtime.getNil();
       CLEAR_REGS();
-    }
-
-    public boolean IS_NOT_EXTENDED() {
-      return extend.isNil();
     }
 
     public void ASET(String T, String V) {

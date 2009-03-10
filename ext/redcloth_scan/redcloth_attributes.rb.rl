@@ -1,8 +1,8 @@
-/*
- * redcloth_attributes.rb.rl
- *
- * Copyright (C) 2009 Jason Garber
- */
+# 
+# redcloth_attributes.rb.rl
+# 
+# Copyright (C) 2009 Jason Garber
+# 
 
 %%{
 
@@ -12,26 +12,36 @@
 
 }%%
 
-%% write data nofinal;
+module RedCloth
+  module RedclothAttributes
+    include BaseScanner
 
+    def initialize
+      %% write data nofinal;
+      # % (gets syntax highlighting working again)
+    end
 
-def redcloth_attribute_parser(machine, data)
-  regs = {}
+    def redcloth_attribute_parser(machine, data)
+      regs = {}
 
-  %% write init;
+      %% write init;
 
-  cs = machine
+      cs = machine
 
-  %% write exec;
+      %% write exec;
 
-  return regs
-}
+      return regs
+    end
 
-def redcloth_attributes(str)
-  cs = redcloth_attributes_en_inline
-  return redcloth_attribute_parser(cs, str);
+    def redcloth_attributes(str)
+      cs = redcloth_attributes_en_inline
+      return redcloth_attribute_parser(cs, str)
+    end
 
-def redcloth_link_attributes(str)
-  cs = redcloth_attributes_en_link_says;
-  return redcloth_attribute_parser(cs, str);
-}
+    def redcloth_link_attributes(str)
+      cs = redcloth_attributes_en_link_says;
+      return redcloth_attribute_parser(cs, str)
+    end
+    
+  end
+end

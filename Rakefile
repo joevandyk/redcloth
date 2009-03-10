@@ -2,8 +2,7 @@ require 'lib/redcloth/version'
 require 'rubygems'
 gem 'echoe', '>= 3.0.1'
 require 'echoe'
-
-Gem::Specification::PLATFORM_CROSS_TARGETS << "pureruby"
+Dir["#{File.dirname(__FILE__)}/lib/tasks/*.rake"].sort.each { |ext| load(ext) }
 
 e = Echoe.new('RedCloth', RedCloth::VERSION.to_s) do |p|
   p.summary = RedCloth::DESCRIPTION
@@ -98,11 +97,17 @@ when /java/
   end
   
 when /pureruby/
-
   filename = "lib/redcloth_scan.rb"
   file filename => FileList["#{ext}/redcloth_scan.rb", "#{ext}/redcloth_inline.rb", "#{ext}/redcloth_attributes.rb"] do
-    sources = FileList["#{ext}/**/redcloth_*.rb"].join(' ')
-    sh "cat #{sources} > #{filename}"
+    
+    # FIXME: for now, do this so it keeps its line numbers
+    File.open(filename, 'w') do |f| 
+      FileList["#{ext}/redcloth_scan.rb", "#{ext}/redcloth_inline.rb", "#{ext}/redcloth_attributes.rb"].each do |filename|
+        f.write(%{require "#{filename}"\n})
+      end
+    end
+    # sources = FileList["#{ext}/**/redcloth_*.rb"].join(' ')
+    # sh "cat #{sources} > #{filename}"
   end
   
 else
@@ -113,7 +118,7 @@ end
 task :compile => [filename]
 
 def ragel(target_file, source_file)
-  case target_file
+  host_language = case target_file
   when /java$/
     "J"
   when /rb$/

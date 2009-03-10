@@ -70,11 +70,11 @@ VALUE red_pass_code(VALUE, VALUE, VALUE, ID);
   CLEAR_REGS()
 #define ADD_EXTENDED_BLOCK()    rb_str_append(html, red_block(self, regs, block, refs)); CLEAR(block);
 #define END_EXTENDED()     extend = Qnil; CLEAR_REGS();
-#define IS_NOT_EXTENDED()     NIL_P(extend)
 #define ADD_BLOCKCODE()    rb_str_append(html, red_blockcode(self, regs, block)); CLEAR(block); CLEAR_REGS()
 #define ADD_EXTENDED_BLOCKCODE()    rb_str_append(html, red_blockcode(self, regs, block)); CLEAR(block);
 #define ASET(T, V)     rb_hash_aset(regs, ID2SYM(rb_intern(T)), STR_NEW2(V));
 #define AINC(T)        red_inc(regs, ID2SYM(rb_intern(T)));
+#define INC(N)         N++;
 #define SET_ATTRIBUTES() \
   SET_ATTRIBUTE("class_buf", "class"); \
   SET_ATTRIBUTE("id_buf", "id"); \
