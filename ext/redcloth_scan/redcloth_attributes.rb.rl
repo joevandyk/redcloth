@@ -16,30 +16,46 @@ module RedCloth
   module RedclothAttributes
     include BaseScanner
 
-    def initialize
-      %% write data nofinal;
-      # % (gets syntax highlighting working again)
+    def write_attributes_machine
+      %%{
+        # All other variables become local, letting Ruby garbage collect them. This
+        # prevents us from having to manually reset them.
+
+        variable data  @data;
+        variable p     @p;
+        variable pe    @pe;
+        variable cs    @cs;
+        variable ts    @ts;
+        variable te    @te;
+
+        write data nofinal;
+      }%%
     end
 
     def redcloth_attribute_parser(machine, data)
-      regs = {}
-
-      %% write init;
+      %% write init; #%
+      
+      @data = data
+      @regs = {}
+      @p = 0
+      @pe = @data.length
 
       cs = machine
 
-      %% write exec;
+      %% write exec; #%
 
-      return regs
+      return @regs
     end
 
     def redcloth_attributes(str)
-      cs = redcloth_attributes_en_inline
+      write_attributes_machine
+      self.cs = self.redcloth_attributes_en_inline
       return redcloth_attribute_parser(cs, str)
     end
 
     def redcloth_link_attributes(str)
-      cs = redcloth_attributes_en_link_says;
+      write_attributes_machine
+      self.cs = self.redcloth_attributes_en_link_says;
       return redcloth_attribute_parser(cs, str)
     end
     

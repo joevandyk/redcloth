@@ -19,64 +19,64 @@
 module RedCloth
   module BaseScanner
     attr_accessor :p, :pe, :refs
-    attr_accessor :data, :orig_data, :cs, :act, :nest, :ts, :te, :reg, :bck, :eof,
+    attr_reader :data
+    attr_accessor :orig_data, :cs, :act, :nest, :ts, :te, :reg, :bck, :eof,
       :html, :table, :block, :regs
     attr_accessor :list_layout, :list_type, :list_index, :list_continue, :listm, 
       :refs_found, :plain_block
 
     def CLEAR_REGS()
-      self.regs = {}
+      @regs = {}
     end
     def RESET_REG()
-      reg = nil
+      @reg = nil
     end
     def CAT(h)
-      return if h.empty? #FIXME WHY WOULD IT BE BLANK?
       h << data[ts, te-ts]
     end
     def CLEAR(h)
-      h = ""
+      h.replace("")
     end
     def RSTRIP_BANG(h)
       h.rstrip!
     end
     def SET_PLAIN_BLOCK(t) 
-      plain_block = t
+      @plain_block = t
     end
     def RESET_TYPE()
-      self.regs[:type] = plain_block
+      @regs[:type] = @plain_block
     end
     def INLINE(h, t)
-      h << self.send(t, regs)
+      h << self.send(t, @regs)
     end
     def DONE(h)
-      html << h
+      @html << h
       CLEAR(h)
       CLEAR_REGS()
     end
     def PASS(h, a, t)
-      h << red_pass(regs, a.to_sym, t, refs)
+      h << red_pass(@regs, a.to_sym, t, @refs)
     end
     def PARSE_ATTR(a)
-      red_parse_attr(regs, a)
+      red_parse_attr(@regs, a)
     end
     def PARSE_LINK_ATTR(a)
-      red_parse_link_attr(regs, a)
+      red_parse_link_attr(@regs, a)
     end
     def PARSE_IMAGE_ATTR(a)
-      red_parse_image_attr(regs, a)
+      red_parse_image_attr(@regs, a)
     end
     def PASS_CODE(h, a, t, o)
-      h << red_pass_code(regs, a, t)
+      h << red_pass_code(@regs, a, t)
     end
     def ADD_BLOCK()
-      html << red_block(regs, block, refs)
+      @html << red_block(@regs, @block, @refs)
       @extend = nil
-      CLEAR(block)
+      CLEAR(@block)
       CLEAR_REGS()
     end
     def ADD_EXTENDED_BLOCK()
-      html << red_block(regs, block, refs)
+      @html << red_block(@regs, @block, @refs)
       CLEAR(@block)
     end
     def END_EXTENDED()
@@ -84,19 +84,19 @@ module RedCloth
       CLEAR_REGS()
     end
     def ADD_BLOCKCODE()
-      html << red_blockcode(regs, block)
+      @html << red_blockcode(@regs, @block)
       CLEAR(@block)
       CLEAR_REGS()
     end
     def ADD_EXTENDED_BLOCKCODE()
-      html << red_blockcode(regs, block)
-      CLEAR(block)
+      @html << red_blockcode(@regs, @block)
+      CLEAR(@block)
     end
     def ASET(t, v)
-      regs[t] = v
+      @regs[t] = v
     end
     def AINC(t)
-      red_inc(regs, t)
+      red_inc(@regs, t)
     end
     def INC(n)
       n += 1
@@ -108,121 +108,121 @@ module RedCloth
       SET_ATTRIBUTE("style_buf", "style")
     end
     def SET_ATTRIBUTE(b, a)
-      regs[a] = regs[b] unless regs[b].nil?
+      @regs[a] = @regs[b] unless @regs[b].nil?
     end
     def TRANSFORM(t)
-      if (p > reg && reg >= ts)
-        str = redcloth_transform(reg, p, refs)
-        regs[t] = str
+      if (@p > @reg && @reg >= @ts)
+        str = redcloth_transform(reg, p, @refs)
+        @regs[t] = str
         # /*printf("TRANSFORM(" T ") '%s' (p:'%s' reg:'%s')\n", RSTRING_PTR(str), p, reg);*/  \
       else
-        regs[t] = nil
+        @regs[t] = nil
       end
     end
     def STORE(t)
-      if (p > reg && reg >= ts)
-        str = data[reg, p-reg]
-        regs[t] = str
+      if (@p > @reg && @reg >= @ts)
+        str = @data[@reg, @p - @reg]
+        @regs[t] = str
         # /*printf("STORE(" T ") '%s' (p:'%s' reg:'%s')\n", RSTRING_PTR(str), p, reg);*/  \
       else
-        regs[t] = nil
+        @regs[t] = nil
       end
     end
     def STORE_B(t)
-      if (p > bck && bck >= ts)
-        str = data[bck, p-bck]
-        regs[t] = str
+      if (@p > @bck && @bck >= @ts)
+        str = @data[@bck, @p - @bck]
+        @regs[t] = str
         # /*printf("STORE_B(" T ") '%s' (p:'%s' reg:'%s')\n", RSTRING_PTR(str), p, reg);*/  \
       else
-        regs[t] = nil
+        @regs[t] = nil
       end
     end
     def STORE_URL(t)
-      if (p > reg && reg >= ts)
+      if (@p > @reg && @reg >= @ts)
         punct = true
-        while (p > reg && punct)
-          case data[p - 1, 1]
+        while (@p > @reg && punct)
+          case @data[@p - 1, 1]
           when ')'
-            temp_p = p - 1
+            temp_p = @p - 1
             level = -1
-            while (temp_p > reg)
-              case data[temp_p - 1, 1]
+            while (temp_p > @reg)
+              case @data[temp_p - 1, 1]
                 when '('; level += 1
                 when ')'; level -= 1
               end
               temp_p -= 1
             end
             if (level == 0) 
-              punct = 0
+              punct = false
             else
-              p -= 1
+              @p -= 1
             end
           when '!', '"', '#', '$', '%', ']', '[', '&', '\'',
             '*', '+', ',', '-', '.', '(', ':', ';', '=', 
             '?', '@', '\\', '^', '_', '`', '|', '~'
-              p -= 1
+              @p -= 1
           else
-            punct = 0
+            punct = false
           end
         end
-        te = p
+        @te = @p
       end
       STORE(t)
-      if ( !refs.nil? && refs.has_key?(regs[t]) )
-        regs[t] = refs[regs[t]]
+      if ( ! @refs.nil? && @refs.has_key?(@regs[t]) )
+        @regs[t] = @refs[@regs[t]]
       end
     end
     def STORE_LINK_ALIAS()
-      refs_found[regs[:text]] = regs[:href]
+      @refs_found[@regs[:text]] = @regs[:href]
     end
     def CLEAR_LIST()
-      list_layout = []
+      @list_layout = []
     end
     def LIST_ITEM()
       aint = 0
-      aval = list_index[nest-1]
+      aval = @list_index[@nest-1]
       aint = aval.to_i unless aval.nil?
-      if (list_type == "ol")
-        list_index[nest-1] = aint + 1
+      if (@list_type == "ol")
+        @list_index[@nest-1] = aint + 1
       end
-      if (nest > list_layout.length)
-        listm = sprintf("%s_open", list_type)
+      if (@nest > @list_layout.length)
+        listm = sprintf("%s_open", @list_type)
         if (list_continue)
-          list_continue = false
-          regs[:start] = list_index[nest-1]
+          @list_continue = false
+          @regs[:start] = @list_index[@nest-1]
         else
-          start = regs[:start]
+          start = @regs[:start]
           if (start.nil?)
-            list_index[nest-1] = 1
+            @list_index[@nest-1] = 1
           else
             start_num = start.to_i
-            list_index[nest-1] = start_num
+            @list_index[@nest-1] = start_num
           end
         end
-        regs[:nest] = nest
-        html << self.send(listm, regs)
-        list_layout[nest-1] = list_type
+        @regs[:nest] = @nest
+        @html << self.send(listm, @regs)
+        @list_layout[@nest-1] = @list_type
         CLEAR_REGS()
         ASET("first", "true")
       end
       LIST_CLOSE()
-      regs[:nest] = list_layout.length
+      @regs[:nest] = @list_layout.length
       ASET("type", "li_open")
     end
     def LIST_CLOSE()
-      while (nest < list_layout.length)
-        regs[:nest] = list_layout.length
-        end_list = list_layout.pop
+      while (@nest < @list_layout.length)
+        @regs[:nest] = @list_layout.length
+        end_list = @list_layout.pop
         if (!end_list.nil?)
           listm = sprintf("%s_close", end_list)
-          html << self.send(listm, regs)
+          @html << self.send(listm, @regs)
         end
       end
     end
 
     def red_pass(regs, ref, meth, refs)
       txt = regs[ref]
-      regs[ref] = redcloth_inline2(self, txt, refs) if (!txt.nil?)
+      regs[ref] = redcloth_inline2(txt, refs) if (!txt.nil?)
       return self.send(meth, regs)
     end
 
@@ -270,13 +270,14 @@ module RedCloth
 
     def rb_str_cat_escaped(str, ts, te)
       source_str = STR_NEW(ts, te-ts);
-      escaped_str = self.escape(source_str)
+      escaped_str = self.send(:escape, source_str) #FIXME: This is a hack to get around private method.
+      # escaped_str = self.escape(source_str)
       str << escaped_str
     end
 
     def rb_str_cat_escaped_for_preformatted(str, ts, te)
       source_str = STR_NEW(ts, te-ts);
-      escaped_str = self.escape_pre(source_str)
+      escaped_str = self.send(:escape_pre, source_str) #FIXME: This is a hack to get around private method.
       str << escaped_str
     end
     
@@ -286,25 +287,26 @@ module RedCloth
     include BaseScanner
     
     def transform(data, refs)
-      %% write data nofinal;
-      # % (gets syntax highlighting working again)
+      write_transform_machine
       
       @data = data
+      @p = 0
+      @pe = @data.length
       @refs = refs
-      orig_data = data.dup
-      nest = 0
-      html = ""
-      table = ""
-      block = ""
+      @orig_data = data.dup
+      @nest = 0
+      @html = ""
+      @table = ""
+      @block = ""
       CLEAR_REGS()
       
-      list_layout = nil
-      list_index = [];
-      list_continue = false;
+      @list_layout = nil
+      @list_index = [];
+      @list_continue = false;
       SET_PLAIN_BLOCK("p")
-      extend = nil
-      listm = []
-      refs_found = {}
+      @extend = nil
+      @listm = []
+      @refs_found = {}
       
       %% write init;
       
@@ -318,6 +320,22 @@ module RedCloth
         after_transform(html)
         return html
       end
+    end
+    
+    def write_transform_machine
+      %%{
+        # All other variables become local, letting Ruby garbage collect them. This
+        # prevents us from having to manually reset them.
+
+        variable data  @data;
+        variable p     @p;
+        variable pe    @pe;
+        variable cs    @cs;
+        variable ts    @ts;
+        variable te    @te;
+
+        write data nofinal;
+      }%%##
     end
   end
   
@@ -337,7 +355,7 @@ module RedCloth
     class ParseError < Exception; end
     
     def redcloth_transform(data, refs)
-      return self.extend(RedCloth::RedclothScan).transform(data, refs)
+      return self.clone.extend(RedCloth::RedclothScan).transform(data, refs)
     end
     
     def redcloth_transform2(str)
@@ -345,8 +363,8 @@ module RedCloth
       return redcloth_transform(str, nil);
     end
     
-    def redcloth_inline2(str)
-      return self.extend(RedCloth::RedClothInline).redcloth_inline2(str, refs)
+    def redcloth_inline2(str, refs)
+      return self.clone.extend(RedCloth::RedclothInline).redcloth_inline2(str, refs)
     end
     
     def html_esc(str, level=nil)
@@ -384,8 +402,8 @@ module RedCloth
     end
     
     
-    def STR_NEW(p,n) 
-#FIXME      rb_enc_str_new((p),(n),rb_utf8_encoding())
+    def STR_NEW(p,n)
+      @data[p, p+n]
     end
     
   end

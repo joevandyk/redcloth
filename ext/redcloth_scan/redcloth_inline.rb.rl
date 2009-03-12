@@ -15,20 +15,15 @@ module RedCloth
   module RedclothInline
     include BaseScanner
 
-    def initialize
-      %% write data nofinal;
-      # % (gets syntax highlighting working again)
-    end
-
     def red_parse_attr(regs, ref)
       txt = regs[ref]
-      new_regs = redcloth_attributes(self, txt)
+      new_regs = redcloth_attributes(txt)
       return regs.update(new_regs)
     end
 
     def red_parse_link_attr(regs, ref)
       txt = regs[ref]
-      new_regs = red_parse_title(redcloth_link_attributes(self, txt), ref)
+      new_regs = red_parse_title(redcloth_link_attributes(txt), ref)
 
       return regs.update(new_regs)
     end
@@ -74,28 +69,52 @@ module RedCloth
       return self.call(meth, regs)
     end
 
-
-
     def redcloth_inline(data, refs)
-      orig_data = data;
-      block = ""
-      regs = nil
-
-      %% write init;
-
+      @data = data
+      @p = 0
+      @pe = @data.length
+      write_inline_machine
+      @orig_data = @data.dup
+      @block = ""
+      
+      # From RedclothScan; not sure all are necessary
+      @refs = refs
+      @block = ""
+      CLEAR_REGS()
+      
       %% write exec;
+      ##%
 
       return block
     end
+    
+    def redcloth_attributes(str)
+      return self.clone.extend(RedCloth::RedclothAttributes).redcloth_attributes(str)
+    end
+    def redcloth_link_attributes(str)
+      return self.clone.extend(RedCloth::RedclothAttributes).redcloth_link_attributes(str)
+    end
 
-    # Append characters to a string, escaping (&, <, >, ", ') using the formatter's escape method.
-    # @param str ruby string
-    # @param ts  start of character buffer to append
-    # @param te  end of character buffer
-    #
 
     def redcloth_inline2(str, refs)
       return redcloth_inline(str, refs);
+    end
+    
+    def write_inline_machine
+      %%{
+        # All other variables become local, letting Ruby garbage collect them. This
+        # prevents us from having to manually reset them.
+
+        variable data  @data;
+        variable p     @p;
+        variable pe    @pe;
+        variable cs    @cs;
+        variable ts    @ts;
+        variable te    @te;
+
+        write data nofinal;
+        write init;
+      }%%##
     end
   end
 end
