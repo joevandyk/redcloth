@@ -226,6 +226,14 @@ public class RedclothScanService implements BasicLibraryService {
       reg = -1;
     }
 
+    public void MARK() {
+      reg = p;
+    }
+
+    public void MARK_B() {
+      bck = p;
+    }
+
     public void CAT(IRubyObject H) {
       ((RubyString)H).cat(data, ts, te-ts);
     }

@@ -16,7 +16,7 @@
   pre_block_start = ( "pre" >A %{ STORE("type"); } A C :> "." ( "." %extend | "" ) " "+ ) ;
   bc_start = ( "bc" >A %{ STORE("type"); } A C :> "." ( "." %extend | "" ) " "+ ) ;
   bq_start = ( "bq" >A %{ STORE("type"); } A C :> "." ( "." %extend | "" ) ( ":" %A uri %{ STORE("cite"); } )? " "+ ) ;
-  non_ac_btype = ( "bq" | "bc" | "pre" | "notextile" );
+  non_ac_btype = ( "bq" | "bc" | "pre" | "notextile" | "table" );
   btype = (alpha alnum*) -- (non_ac_btype | "fn" digit+);
   block_start = ( btype >A %{ STORE("type"); } A C :> "." ( "." %extend | "" ) " "+ ) >B %{ STORE_B("fallback"); };
   all_btypes = btype | non_ac_btype;

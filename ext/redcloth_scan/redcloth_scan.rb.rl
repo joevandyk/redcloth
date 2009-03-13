@@ -87,6 +87,12 @@ module RedCloth
     def STR_NEW(p,n)
       @data[p, n]
     end
+    def MARK()
+      @reg = @p
+    end
+    def MARK_B()
+      @bck = @p
+    end
     def CLEAR_REGS()
       @regs = {}
     end
@@ -370,7 +376,6 @@ module RedCloth
       @refs_found = {}
     
       %% write init;
-    
       %% write exec;
 
       ADD_BLOCK() if (block.length > 0)

@@ -51,6 +51,8 @@ VALUE red_pass_code(VALUE, VALUE, VALUE, ID);
 /* parser macros */
 #define CLEAR_REGS()   regs = rb_hash_new();
 #define RESET_REG()    reg = NULL
+#define MARK()         reg = p;
+#define MARK_B()       bck = p;
 #define CAT(H)         rb_str_cat(H, ts, te-ts)
 #define CLEAR(H)       H = STR_NEW2("")
 #define RSTRIP_BANG(H)      rb_funcall(H, rb_intern("rstrip!"), 0)

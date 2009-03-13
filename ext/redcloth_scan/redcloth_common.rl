@@ -2,8 +2,8 @@
 
   machine redcloth_common;
 
-  action A { @reg = @p; }
-  action B { @bck = @p; }
+  action A { MARK() }
+  action B { MARK_B() }
   action T { STORE("text"); }
   action X { CLEAR_REGS(); RESET_REG(); }
   action cat { CAT(block); }

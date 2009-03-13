@@ -172,10 +172,12 @@ end
 #### Optimization
 
 RAGEL_CODE_GENERATION_STYLES = {
+# C/Ruby only
   'T0' => "Table driven FSM (default)",
   'T1' => "Faster table driven FSM",
   'F0' => "Flat table driven FSM",
   'F1' => "Faster flat table-driven FSM",
+# C only
   'G0' => "Goto-driven FSM",
   'G1' => "Faster goto-driven FSM",
   'G2' => "Really fast goto-driven FSM"
@@ -185,6 +187,7 @@ desc "Find the fastest code generation style for Ragel"
 task :optimize do
   require 'extras/ragel_profiler'
   results = []
+  RAGEL_CODE_GENERATION_STYLES.delete('G0', 'G1', 'G2') if RUBY_PLATFORM =~ /pureruby/
   RAGEL_CODE_GENERATION_STYLES.each do |style, name|
     @code_style = style
     profiler = RagelProfiler.new(style + " " + name)
