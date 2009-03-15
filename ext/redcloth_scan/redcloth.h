@@ -157,9 +157,9 @@ VALUE red_pass_code(VALUE, VALUE, VALUE, ID);
     if (nest > RARRAY_LEN(list_layout)) \
     { \
       sprintf(listm, "%s_open", list_type); \
-      if (list_continue == 1) \
+      if (!NIL_P(rb_hash_aref(regs, ID2SYM(rb_intern("list_continue"))))) \
       { \
-        list_continue = 0; \
+        rb_hash_aset(regs, ID2SYM(rb_intern("list_continue")), Qnil); \
         rb_hash_aset(regs, ID2SYM(rb_intern("start")), rb_ary_entry(list_index, nest-1)); \
       } \
       else \

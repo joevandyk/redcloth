@@ -261,8 +261,8 @@ module RedCloth
       end
       if (@nest > @list_layout.length)
         listm = sprintf("%s_open", @list_type)
-        if (list_continue)
-          @list_continue = false
+        if (@regs[:list_continue])
+          @regs[:list_continue] = nil
           @regs[:start] = @list_index[@nest-1]
         else
           start = @regs[:start]
@@ -374,7 +374,6 @@ module RedCloth
     
       @list_layout = nil
       @list_index = [];
-      @list_continue = false;
       SET_PLAIN_BLOCK("p")
       @extend = nil
       @listm = []

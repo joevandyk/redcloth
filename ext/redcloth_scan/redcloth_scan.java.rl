@@ -31,6 +31,18 @@ public class RedclothScanService implements BasicLibraryService {
       list_layout = runtime.newArray();
     }
     
+    public void SET_LIST_TYPE(String T) {
+      list_type = T;
+    }
+    
+    public void NEST() {
+      nest ++;
+    }
+    
+    public void RESET_NEST() {
+      nest = 0;
+    }
+    
    public void LIST_ITEM() {
      int aint = 0;
      IRubyObject aval = ((RubyArray)list_index).entry(nest-1);
@@ -41,8 +53,8 @@ public class RedclothScanService implements BasicLibraryService {
 
      if(nest > ((RubyArray)list_layout).getLength()) {
        listm = list_type + "_open";       
-       if(list_continue == 1) {
-         list_continue = 0;
+       if( !((RubyHash)regs).aref(runtime.newSymbol("list_continue")).isNil() ) {
+         ((RubyHash)regs).aset(runtime.newSymbol("list_continue"), runtime.getNil());
          ((RubyHash)regs).aset(runtime.newSymbol("start"), ((RubyArray)list_index).entry(nest-1));
        } else {
          IRubyObject start = ((RubyHash)regs).aref(runtime.newSymbol("start"));
@@ -334,7 +346,6 @@ public class RedclothScanService implements BasicLibraryService {
     public IRubyObject list_layout;
     public String list_type = null;
     public IRubyObject list_index;
-    public int list_continue = 0;
     public IRubyObject plain_block;
     public IRubyObject extend;
     public String listm = "";
