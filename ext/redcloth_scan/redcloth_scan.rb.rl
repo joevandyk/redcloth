@@ -310,25 +310,25 @@ module RedCloth
 
     def red_block(regs, block, refs)
       sym_text = :text
-      btype = regs[:type]
+      btype = @regs[:type]
       block = block.strip
       if (!block.nil? && !btype.nil?)
         method = btype.intern
         if (method == :notextile)
-          regs[sym_text] = block
+          @regs[sym_text] = block
         else
-          regs[sym_text] = RedCloth::RedclothInline.redcloth_inline2(@textile_doc, block, refs)
+          @regs[sym_text] = RedCloth::RedclothInline.redcloth_inline2(@textile_doc, block, refs)
         end
         if (@textile_doc.send(:formatter_methods).include? method) #FIXME: This is a hack to get around private method.
-          block = @textile_doc.send(method, regs)
+          block = @textile_doc.send(method, @regs)
         else
-          fallback = regs[:fallback]
+          fallback = @regs[:fallback]
           if (!fallback.nil?)
-            fallback << regs[sym_text]
+            fallback << @regs[sym_text]
             CLEAR_REGS()
-            regs[sym_text] = fallback
+            @regs[sym_text] = fallback
           end
-          block = @textile_doc.p(regs);
+          block = @textile_doc.p(@regs);
         end
       end
       return block
