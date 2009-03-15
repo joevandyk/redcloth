@@ -41,9 +41,10 @@ module RedCloth
       return RedCloth::RedclothInline.redcloth_inline2(self, textile_doc, refs)
     end
     
-    def html_esc(str, level=nil)
-      return "" if str.nil? || str.empty?
+    def html_esc(input, level=nil)
+      return "" if input.nil? || input.empty?
 
+      str = input.dup
       str.gsub!('&') { amp({}) }
       str.gsub!('>') { gt({}) }
       str.gsub!('<') { lt({}) }
