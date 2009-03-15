@@ -22,7 +22,7 @@ module RedCloth
       self.new.redcloth_link_attributes(str)
     end
     
-    def redcloth_attribute_parser(machine, data)
+    def redcloth_attribute_parser(cs, data)
       @data = data + "\0"
       @regs = {}
       @p = 0
@@ -31,7 +31,7 @@ module RedCloth
 
       %% write init; #%
 
-      cs = machine
+      @cs = cs
 
       %% write exec; #%
 
