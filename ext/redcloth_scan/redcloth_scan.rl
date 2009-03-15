@@ -173,7 +173,7 @@
     footnote_start  { fgoto footnote; };
     horizontal_rule { INLINE(html, "hr"); };
     list_start      { CLEAR_LIST(); LIST_ITEM(); fgoto list; };
-    dl_start        { p = ts; INLINE(html, "dl_open"); ASET("type", "dt"); fgoto dl; };
+    dl_start        { fexec(ts + 1); INLINE(html, "dl_open"); ASET("type", "dt"); fgoto dl; };
     table           { INLINE(table, "table_close"); DONE(table); fgoto block; };
     link_alias      { STORE_LINK_ALIAS(); DONE(block); };
     aligned_image   { RESET_TYPE(); fgoto block; };
