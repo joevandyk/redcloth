@@ -177,7 +177,7 @@ module RedCloth
     end
     def TRANSFORM(t)
       if (@reg && @p > @reg && @reg >= @ts)
-        str = redcloth_transform(reg, p, @refs)
+        str = self.class.transform(@textile_doc, STR_NEW(reg, p-reg), @refs)
         @regs[t.to_sym] = str
         # /*printf("TRANSFORM(" T ") '%s' (p:'%s' reg:'%s')\n", RSTRING_PTR(str), p, reg);*/  \
       else
