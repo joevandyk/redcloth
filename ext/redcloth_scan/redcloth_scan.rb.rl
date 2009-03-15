@@ -366,7 +366,6 @@ module RedCloth
       @refs = refs
       @p = 0
       @pe = @data.length
-      eof = @pe
       @orig_data = data.dup
       @html = ""
       @table = ""

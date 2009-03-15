@@ -76,7 +76,6 @@ module RedCloth
       @refs = refs
       @p = 0
       @pe = @data.length
-      eof = @pe
       @orig_data = @data.dup
       CLEAR_REGS()
       @block = ""

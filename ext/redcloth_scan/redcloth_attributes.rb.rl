@@ -27,7 +27,6 @@ module RedCloth
       @regs = {}
       @p = 0
       @pe = @data.length
-      eof = @pe
 
       %% write init; #%
 
