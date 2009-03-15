@@ -49,7 +49,7 @@ module RedCloth
             end
             p -= 1
           end
-          title = s[p + 1, s.length - 1]
+          title = s[p + 1, (s.length - 1) - (p + 1)]
           p -= 1 if (p > 0 && s[p - 1, 1] == ' ')
           if (p != 0)
             regs[ref.to_sym] = s[0, p]
