@@ -5,7 +5,7 @@
   
   action esc { rb_str_cat_escaped(@block, @ts, @te); }
   action esc_pre { rb_str_cat_escaped_for_preformatted(@block, STR_NEW(@ts, @te-@ts)); }
-  action ignore { @block << self.ignore(@regs); }
+  action ignore { @block << @textile_doc.ignore(@regs); }
   
   # conditionals
   action starts_line {
