@@ -26,7 +26,6 @@ module RedCloth
     def red_parse_link_attr(regs, ref)
       txt = regs[ref.to_sym]
       new_regs = red_parse_title(redcloth_link_attributes(txt), ref)
-
       return regs.update(new_regs)
     end
 
@@ -65,18 +64,19 @@ module RedCloth
       txt = regs[ref.to_sym]
       if (!txt.nil?)
         txt2 = ""
-        rb_str_cat_escaped_for_preformatted(txt2, text)
+        rb_str_cat_escaped_for_preformatted(txt2, txt)
         regs[ref.to_sym] = txt2
       end
-      return self.call(meth, regs)
+      return @textile_doc.send(meth, regs)
     end
 
     def redcloth_inline(textile_doc, data, refs)
       @textile_doc = textile_doc
-      @data = data
+      @data = data + "\0"
       @refs = refs
       @p = 0
       @pe = @data.length
+      eof = @pe
       @orig_data = @data.dup
       CLEAR_REGS()
       @block = ""

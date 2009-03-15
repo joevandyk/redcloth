@@ -143,6 +143,9 @@ VALUE red_pass_code(VALUE, VALUE, VALUE, ID);
 #define STORE_LINK_ALIAS() \
   rb_hash_aset(refs_found, rb_hash_aref(regs, ID2SYM(rb_intern("text"))), rb_hash_aref(regs, ID2SYM(rb_intern("href"))))
 #define CLEAR_LIST() list_layout = rb_ary_new()
+#define SET_LIST_TYPE(T) list_type = T;
+#define NEST() nest ++;
+#define RESET_NEST() nest = 0;
 #define LIST_ITEM() \
     int aint = 0; \
     VALUE aval = rb_ary_entry(list_index, nest-1); \

@@ -4,7 +4,7 @@
   include redcloth_common "redcloth_common.rl";
   
   action esc { rb_str_cat_escaped(@block, @ts, @te); }
-  action esc_pre { rb_str_cat_escaped_for_preformatted(@block, @ts, @te); }
+  action esc_pre { rb_str_cat_escaped_for_preformatted(@block, STR_NEW(@ts, @te-@ts)); }
   action ignore { @block << self.ignore(@regs); }
   
   # conditionals

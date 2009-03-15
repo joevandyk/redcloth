@@ -20,16 +20,16 @@
   btype = (alpha alnum*) -- (non_ac_btype | "fn" digit+);
   block_start = ( btype >A %{ STORE("type"); } A C :> "." ( "." %extend | "" ) " "+ ) >B %{ STORE_B("fallback"); };
   all_btypes = btype | non_ac_btype;
-  next_block_start = ( all_btypes A_noactions C_noactions :> "."+ " " ) >A @{ p = reg - 1; } ;
+  next_block_start = ( all_btypes A_noactions C_noactions :> "."+ " " ) >A @{ fexec(reg); } ;
   double_return = LF{2,} ;
   block_end = ( double_return | EOF );
   ftype = ( "fn" >A %{ STORE("type"); } digit+ >A %{ STORE("id"); } ) ;
   footnote_start = ( ftype A C :> dotspace ) ;
-  ul = "*" %{INC(nest); list_type = "ul";};
-  ol = "#" %{INC(nest); list_type = "ol";};
+  ul = "*" %{NEST(); SET_LIST_TYPE("ul");};
+  ol = "#" %{NEST(); SET_LIST_TYPE("ol");};
   ul_start  = ( ul | ol )* ul A C :> " "+   ;
   ol_start  = ( ul | ol )* ol N A C :> " "+ ;
-  list_start  = " "* ( ul_start | ol_start ) >{nest = 0;} ;
+  list_start  = " "* ( ul_start | ol_start ) >{RESET_NEST();} ;
   dt_start = "-" . " "+ ;
   dd_start = ":=" ;
   long_dd  = dd_start " "* LF %{ ADD_BLOCK(); ASET("type", "dd"); } any+ >A %{ TRANSFORM("text"); } :>> "=:" ;
@@ -41,7 +41,7 @@
   # image lookahead
   IMG_A_LEFT = "<" %{ ASET("float", "left"); } ;
   IMG_A_RIGHT = ">" %{ ASET("float", "right"); } ;
-  aligned_image = ( "["? "!" (IMG_A_LEFT | IMG_A_RIGHT) ) >A @{ p = reg - 1; } ;
+  aligned_image = ( "["? "!" (IMG_A_LEFT | IMG_A_RIGHT) ) >A @{ fexec(reg); } ;
   
   # html blocks
   BlockTagName = Name - ("pre" | "notextile" | "a" | "applet" | "basefont" | "bdo" | "br" | "font" | "iframe" | "img" | "map" | "object" | "param" | "embed" | "q" | "script" | "span" | "sub" | "sup" | "abbr" | "acronym" | "cite" | "code" | "del" | "dfn" | "em" | "ins" | "kbd" | "samp" | "strong" | "var" | "b" | "big" | "i" | "s" | "small" | "strike" | "tt" | "u");
@@ -51,7 +51,7 @@
   html_start = indent >B %{STORE_B("indent_before_start");} block_start_tag >B %{STORE_B("start_tag");}  indent >B %{STORE_B("indent_after_start");} ;
   html_end = indent >B %{STORE_B("indent_before_end");} block_end_tag >B %{STORE_B("end_tag");} (indent LF?) >B %{STORE_B("indent_after_end");} ;
   standalone_html = indent (block_start_tag | block_empty_tag | block_end_tag) indent (LF+ | EOF);
-  html_end_terminating_block = ( LF indent block_end_tag ) >A @{ p = reg - 1; } ;
+  html_end_terminating_block = ( LF indent block_end_tag ) >A @{ fexec(reg); } ;
 
   # tables
   para = ( default+ ) -- LF ;
@@ -146,7 +146,7 @@
 
   list := |*
     LF list_start   { ADD_BLOCK(); LIST_ITEM(); };
-    block_end       { ADD_BLOCK(); nest = 0; LIST_CLOSE(); fgoto main; };
+    block_end       { ADD_BLOCK(); RESET_NEST(); LIST_CLOSE(); fgoto main; };
     default => cat;
   *|;
 

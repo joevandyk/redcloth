@@ -23,10 +23,11 @@ module RedCloth
     end
     
     def redcloth_attribute_parser(machine, data)
-      @data = data
+      @data = data + "\0"
       @regs = {}
       @p = 0
       @pe = @data.length
+      eof = @pe
 
       %% write init; #%
 

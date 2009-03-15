@@ -10,7 +10,7 @@
   machine redcloth_scan;
   include redcloth_common "redcloth_common.rb.rl";
 
-  action extend { extend = regs["type"] }
+  action extend { @extend = @regs[:type] }
 
   include redcloth_scan "redcloth_scan.rl";
 
@@ -79,7 +79,7 @@ module RedCloth
   class BaseScanner
     attr_accessor :p, :pe, :refs
     attr_reader :data
-    attr_accessor :orig_data, :cs, :act, :nest, :ts, :te, :reg, :bck, :eof,
+    attr_accessor :orig_data, :cs, :act, :ts, :te, :reg, :bck, :eof,
       :html, :table, :block, :regs
     attr_accessor :list_layout, :list_type, :list_index, :list_continue, :listm, 
       :refs_found, :plain_block
@@ -164,10 +164,7 @@ module RedCloth
       @regs[t.to_sym] = v
     end
     def AINC(t)
-      red_inc(@regs, t)
-    end
-    def INC(n)
-      n += 1
+      red_inc(@regs, t.to_sym)
     end
     def SET_ATTRIBUTES()
       SET_ATTRIBUTE("class_buf", "class")
@@ -246,6 +243,15 @@ module RedCloth
     def CLEAR_LIST()
       @list_layout = []
     end
+    def SET_LIST_TYPE(t)
+      @list_type = t
+    end
+    def NEST()
+      @nest += 1
+    end
+    def RESET_NEST()
+      @nest = 0
+    end
     def LIST_ITEM()
       aint = 0
       aval = @list_index[@nest-1]
@@ -271,7 +277,7 @@ module RedCloth
         @html << @textile_doc.send(listm, @regs)
         @list_layout[@nest-1] = @list_type
         CLEAR_REGS()
-        ASET("first", "true")
+        ASET("first", true)
       end
       LIST_CLOSE()
       @regs[:nest] = @list_layout.length
@@ -342,9 +348,8 @@ module RedCloth
       str << escaped_str
     end
 
-    def rb_str_cat_escaped_for_preformatted(str, ts, te)
-      source_str = STR_NEW(ts, te-ts);
-      escaped_str = @textile_doc.send(:escape_pre, source_str) #FIXME: This is a hack to get around private method.
+    def rb_str_cat_escaped_for_preformatted(str, text)
+      escaped_str = @textile_doc.send(:escape_pre, text) #FIXME: This is a hack to get around private method.
       str << escaped_str
     end
   end
@@ -356,12 +361,12 @@ module RedCloth
     
     def transform(textile_doc, data, refs)
       @textile_doc = textile_doc
-      @data = data
+      @data = data + "\0"
       @refs = refs
       @p = 0
       @pe = @data.length
+      eof = @pe
       @orig_data = data.dup
-      @nest = 0
       @html = ""
       @table = ""
       @block = ""
