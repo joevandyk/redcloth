@@ -176,7 +176,7 @@ module RedCloth
       @regs[a.to_sym] = @regs[b.to_sym] unless @regs[b.to_sym].nil?
     end
     def TRANSFORM(t)
-      if (@p > @reg && @reg >= @ts)
+      if (@reg && @p > @reg && @reg >= @ts)
         str = redcloth_transform(reg, p, @refs)
         @regs[t.to_sym] = str
         # /*printf("TRANSFORM(" T ") '%s' (p:'%s' reg:'%s')\n", RSTRING_PTR(str), p, reg);*/  \
@@ -185,7 +185,7 @@ module RedCloth
       end
     end
     def STORE(t)
-      if (@p > @reg && @reg >= @ts)
+      if (@reg && @p > @reg && @reg >= @ts)
         str = @data[@reg, @p - @reg]
         @regs[t.to_sym] = str
         # /*printf("STORE(" T ") '%s' (p:'%s' reg:'%s')\n", RSTRING_PTR(str), p, reg);*/  \
@@ -194,7 +194,7 @@ module RedCloth
       end
     end
     def STORE_B(t)
-      if (@p > @bck && @bck >= @ts)
+      if (@bck && @p > @bck && @bck >= @ts)
         str = @data[@bck, @p - @bck]
         @regs[t.to_sym] = str
         # /*printf("STORE_B(" T ") '%s' (p:'%s' reg:'%s')\n", RSTRING_PTR(str), p, reg);*/  \
@@ -203,7 +203,7 @@ module RedCloth
       end
     end
     def STORE_URL(t)
-      if (@p > @reg && @reg >= @ts)
+      if (@reg && @p > @reg && @reg >= @ts)
         punct = true
         while (@p > @reg && punct)
           case @data[@p - 1, 1]
