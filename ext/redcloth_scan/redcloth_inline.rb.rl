@@ -20,13 +20,13 @@ module RedCloth
     def red_parse_attr(regs, ref)
       txt = regs[ref.to_sym]
       new_regs = redcloth_attributes(txt)
-      return regs.update(new_regs)
+      return regs.merge!(new_regs)
     end
 
     def red_parse_link_attr(regs, ref)
       txt = regs[ref.to_sym]
       new_regs = red_parse_title(redcloth_link_attributes(txt), ref)
-      return regs.update(new_regs)
+      return regs.merge!(new_regs)
     end
 
     def red_parse_image_attr(regs, ref)

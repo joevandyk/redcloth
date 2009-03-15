@@ -173,7 +173,7 @@ module RedCloth
       SET_ATTRIBUTE("style_buf", "style")
     end
     def SET_ATTRIBUTE(b, a)
-      @regs[a] = @regs[b] unless @regs[b].nil?
+      @regs[a.to_sym] = @regs[b.to_sym] unless @regs[b.to_sym].nil?
     end
     def TRANSFORM(t)
       if (@p > @reg && @reg >= @ts)
