@@ -98,16 +98,10 @@ when /java/
   
 when /pureruby/
   filename = "lib/redcloth_scan.rb"
-  file filename => FileList["#{ext}/redcloth_scan.rb", "#{ext}/redcloth_inline.rb", "#{ext}/redcloth_attributes.rb"] do
+  file filename => FileList["#{ext}/redcloth_scan.rb", "#{ext}/redcloth_inline.rb", "#{ext}/redcloth_attributes.rb"] do |task|
     
-    # FIXME: for now, do this so it keeps its line numbers
-    File.open(filename, 'w') do |f| 
-      FileList["#{ext}/redcloth_scan.rb", "#{ext}/redcloth_inline.rb", "#{ext}/redcloth_attributes.rb"].each do |filename|
-        f.write(%{require "#{filename}"\n})
-      end
-    end
-    # sources = FileList["#{ext}/**/redcloth_*.rb"].join(' ')
-    # sh "cat #{sources} > #{filename}"
+    sources = task.prerequisites.join(' ')
+    sh "cat #{sources} > #{filename}"
   end
   
 else
@@ -171,23 +165,25 @@ end
 
 #### Optimization
 
+# C/Ruby code styles
 RAGEL_CODE_GENERATION_STYLES = {
-# C/Ruby only
   'T0' => "Table driven FSM (default)",
   'T1' => "Faster table driven FSM",
   'F0' => "Flat table driven FSM",
-  'F1' => "Faster flat table-driven FSM",
-# C only
+  'F1' => "Faster flat table-driven FSM"
+}
+# C only code styles
+RAGEL_CODE_GENERATION_STYLES.merge!({
   'G0' => "Goto-driven FSM",
   'G1' => "Faster goto-driven FSM",
   'G2' => "Really fast goto-driven FSM"
-}
+}) if RUBY_PLATFORM !~ /pureruby/
 
 desc "Find the fastest code generation style for Ragel"
 task :optimize do
   require 'extras/ragel_profiler'
   results = []
-  RAGEL_CODE_GENERATION_STYLES.delete('G0', 'G1', 'G2') if RUBY_PLATFORM =~ /pureruby/
+  
   RAGEL_CODE_GENERATION_STYLES.each do |style, name|
     @code_style = style
     profiler = RagelProfiler.new(style + " " + name)
@@ -204,7 +200,7 @@ task :optimize do
     profiler.measure(:test) do
       Rake::Task['test'].invoke
     end
-    profiler.ext_size(ext_so)
+    profiler.ext_size(filename)
     
   end
   puts RagelProfiler.results
