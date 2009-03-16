@@ -56,24 +56,26 @@ module RedCloth
       return str;
     end
     
+    LATEX_ESCAPE_CHARACTERS = {
+      '{' => "#123",
+      '}' => "#125",
+      '\\' => "#92",
+      '#' => "#35",
+      '$' => "#36",
+      '%' => "#37",
+      '&' => "amp",
+      '_' => "#95",
+      '^' => "circ",
+      '~' => "tilde",
+      '<' => "lt",
+      '>' => "gt",
+      '\n'=> "#10"
+    }    
     def latex_esc(str)
       return "" if str.nil? || str.empty?
       
-      str.gsub!('{') { entity({:text => "#123"}) }
-      str.gsub!('}') { entity({:text => "#125"}) }
-      str.gsub!('\\') { entity({:text => "#92"}) }
-      str.gsub!('#') { entity({:text => "#35"}) }
-      str.gsub!('$') { entity({:text => "#36"}) }
-      str.gsub!('%') { entity({:text => "#37"}) }
-      str.gsub!('&') { entity({:text => "amp"}) }
-      str.gsub!('_') { entity({:text => "#95"}) }
-      str.gsub!('^') { entity({:text => "circ"}) }
-      str.gsub!('~') { entity({:text => "tilde"}) }
-      str.gsub!('<') { entity({:text => "lt"}) }
-      str.gsub!('>') { entity({:text => "gt"}) }
-      str.gsub!('\n') { entity({:text => "#10"}) }
-      
-      return str
+      ch_regex = Regexp.new(LATEX_ESCAPE_CHARACTERS.keys.map {|ch| Regexp.escape(ch) }.join("|"))
+      str.gsub(ch_regex) {|ch| entity({:text => LATEX_ESCAPE_CHARACTERS[ch]}) }
     end
   end
 
