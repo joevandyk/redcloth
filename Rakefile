@@ -52,7 +52,9 @@ e = Echoe.new('RedCloth', RedCloth::VERSION.to_s) do |p|
 
 end
 
-#### Pre-compiled extensions for alternative platforms
+def remove_other_platforms
+  Dir["lib/redcloth_scan.{bundle,so,jar,rb}"].each { |file| rm file }
+end
 
 def move_extensions
   Dir["ext/**/*.{bundle,so,jar}"].each { |file| mv file, "lib/" }
@@ -82,6 +84,7 @@ when /mingw/
       ruby "-I. extconf.rb"
       system(PLATFORM =~ /mswin/ ? 'nmake' : 'make')
     end
+    remove_other_platforms
     move_extensions
     rm "#{ext}/rbconfig.rb"
   end
@@ -93,6 +96,7 @@ when /java/
     sources = FileList["#{ext}/**/*.java"].join(' ')
     sh "javac -target 1.5 -source 1.5 -d #{ext} #{java_classpath_arg} #{sources}"
     sh "jar cf lib/redcloth_scan.jar -C #{ext} ."
+    remove_other_platforms
     move_extensions
   end
   
@@ -100,6 +104,7 @@ when /pureruby/
   filename = "lib/redcloth_scan.rb"
   file filename => FileList["#{ext}/redcloth_scan.rb", "#{ext}/redcloth_inline.rb", "#{ext}/redcloth_attributes.rb"] do |task|
     
+    remove_other_platforms
     sources = task.prerequisites.join(' ')
     sh "cat #{sources} > #{filename}"
   end
@@ -120,7 +125,13 @@ def ragel(target_file, source_file)
   else
     "C"
   end
-  code_style = (host_language == "C") ? " -" + (@code_style || "T0") : ""
+  preferred_code_style = case host_language
+  when "R"
+    "F1"
+  else
+    "T0"
+  end
+  code_style = " -" + (@code_style || preferred_code_style)
   ensure_ragel_version(target_file) do
     sh %{ragel #{source_file} -#{host_language}#{code_style} -o #{target_file}}
   end
