@@ -27,13 +27,13 @@ Gem::Specification.new do |s|
   s.files -= Dir['lib/**/*.dll']
   s.files -= Dir['lib/**/*.bundle']
   s.files -= Dir['lib/**/*.so']
-  
+
   s.platform = RUBY_PLATFORM[/java/] || 'ruby'
   case s.platform.to_s
   when /java/
     s.files += ['lib/redcloth_scan.jar']
   else # MRI or Rubinius
-    s.files += %w[attributes inline scan].map {|f| "ext/redcloth_scan/redcloth_#{f}.c"}
+    #s.files += %w[attributes inline scan].map {|f| "ext/redcloth_scan/redcloth_#{f}.c"}
     s.files += ["ext/redcloth_scan/redcloth.h"]
     s.extensions = Dir['ext/**/extconf.rb']
   end
@@ -42,7 +42,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency('rake', '~> 0.8.7')
   s.add_development_dependency('rspec', '~> 2.4')
   s.add_development_dependency('diff-lcs', '~> 1.1.2')
-  
+
   # Have to load these even though they're only needed for
   # gem packaging. Otherwise, Bundler complains that they're
   # not installed even though they're not required.
